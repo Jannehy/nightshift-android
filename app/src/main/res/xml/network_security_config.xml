@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Nightshift is reached over a private tunnel (Tailscale, WireGuard) or the
+    local network, both plain HTTP, and the address is user-configurable – so no
+    fixed domain list can cover it. Android blocks cleartext by default since
+    API 28; this permits it for the whole app, the same trade-off the iOS build
+    makes with NSAllowsArbitraryLoads.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>
