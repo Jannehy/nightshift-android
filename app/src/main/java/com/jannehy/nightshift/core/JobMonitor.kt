@@ -158,7 +158,14 @@ class JobMonitor(private val session: Session, private val source: Source) {
         state = when {
             log.failed -> State.Failed("")
             log.finished -> { progress = 1f; State.Finished("") }
-            log.running -> State.Running
+            log.running -> {
+                // No stream, so no progress events – read the counts off the log.
+                log.counts?.let {
+                    progress = it.fraction
+                    trackCounter = "${it.done}/${it.total}"
+                }
+                State.Running
+            }
             else -> State.Idle
         }
     }

@@ -77,6 +77,10 @@ data class JobEvent(
         }
 }
 
+private val PROBE_TOTAL = Regex("""\((\d+) tracks\)""")
+private val SPOTDL_TOTAL = Regex("""(\d+) tracks found""")
+private val DONE_LINE = Regex("""^(✓ |Downloaded |Skipping )""", RegexOption.MULTILINE)
+
 /** `/download-log` and `/nightly-log` – lets the UI restore after a cold start. */
 @Serializable
 data class LogState(
@@ -87,6 +91,28 @@ data class LogState(
     val running: Boolean = false,
 ) {
     val lines: List<String> get() = log.split("\n")
+
+    /** Track counts read out of the log text.
+     *
+     *  While the app polls the log – after a cold start, or when a job was
+     *  begun elsewhere – no progress events arrive, so the percentage is
+     *  derived the same way the web UI derives it. */
+    data class Counts(val done: Int, val total: Int) {
+        /** The same 5 … 95 % window the web UI uses, so both agree. */
+        val fraction: Float get() = minOf(0.95f, 0.05f + done.toFloat() / total * 0.90f)
+    }
+
+    val counts: Counts?
+        get() {
+            var total = PROBE_TOTAL.find(log)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+            SPOTDL_TOTAL.find(log)?.groupValues?.get(1)?.toIntOrNull()?.let {
+                total = maxOf(total, it)
+            }
+            if (total <= 0) return null
+            val done = DONE_LINE.findAll(log).count()
+            return Counts(minOf(done, total), total)
+        }
+
 }
 
 @Serializable
