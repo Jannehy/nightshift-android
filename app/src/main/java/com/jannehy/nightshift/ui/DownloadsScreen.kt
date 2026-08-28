@@ -17,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.jannehy.nightshift.R
+import com.jannehy.nightshift.core.CookieStatus
 import com.jannehy.nightshift.core.JobMonitor
 import com.jannehy.nightshift.core.NavidromeUser
 import com.jannehy.nightshift.core.Session
@@ -30,8 +31,16 @@ fun DownloadsScreen(session: Session, monitor: JobMonitor) {
     var keepInSync by remember { mutableStateOf(false) }
     var ownerId by remember { mutableStateOf<String?>(null) }
     var ndUsers by remember { mutableStateOf<List<NavidromeUser>>(emptyList()) }
+    var cookieWarnings by remember { mutableStateOf<List<CookieStatus>>(emptyList()) }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+
+    // Cheap and cached on the server side, so it can run on every visit.
+    LaunchedEffect(Unit) {
+        runCatching { session.api?.cookieStatus() }.getOrNull()?.let {
+            cookieWarnings = it.cookies.filter { entry -> entry.needsAttention }
+        }
+    }
 
     LaunchedEffect(session.navidromeEnabled) {
         if (session.navidromeEnabled && ndUsers.isEmpty()) {
@@ -55,6 +64,8 @@ fun DownloadsScreen(session: Session, monitor: JobMonitor) {
                 modifier = Modifier.weight(1f))
             QueueIndicator(monitor.queue)
         }
+
+        CookieBanner(cookieWarnings)
 
         SectionCard {
             Text(stringResource(R.string.paste_link),
@@ -117,12 +128,7 @@ fun DownloadsScreen(session: Session, monitor: JobMonitor) {
         if (monitor.state != JobMonitor.State.Idle || monitor.lines.isNotEmpty()) {
             SectionCard {
                 JobStatusView(monitor)
-                LogView(monitor.lines)
-                if (!monitor.state.isBusy && monitor.lines.isNotEmpty()) {
-                    TextButton(onClick = { monitor.clear() }) {
-                        Text(stringResource(R.string.clear_log))
-                    }
-                }
+                ConsoleView(monitor.lines, isRunning = monitor.state.isBusy)
             }
         }
 

@@ -194,3 +194,29 @@ data class NavidromeUsersResponse(
 
 @Serializable
 data class UsersResponse(val users: List<NightshiftUser> = emptyList())
+
+/**
+ * How a cookie file is doing.
+ *
+ * The expiry date in the file is a poor warning on its own: one whose login
+ * cookie claimed 294 days left was already being turned away after six,
+ * because the site revokes sessions long before the stamps run out. The server
+ * therefore checks against the site itself and reports [signedIn].
+ */
+@Serializable
+data class CookieStatus(
+    val kind: String,
+    val state: String,
+    @SerialName("days_left") val daysLeft: Double? = null,
+    @SerialName("signed_in") val signedIn: Boolean? = null,
+) {
+    val needsAttention: Boolean
+        get() = state in setOf("signed_out", "expired", "soon", "missing")
+
+    /** Something is broken now, as opposed to a date approaching. */
+    val isUrgent: Boolean
+        get() = state in setOf("signed_out", "expired", "missing")
+}
+
+@Serializable
+data class CookieStatusResponse(val cookies: List<CookieStatus> = emptyList())

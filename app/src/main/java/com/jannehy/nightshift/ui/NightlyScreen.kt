@@ -56,7 +56,8 @@ fun NightlyScreen(session: Session, monitor: JobMonitor) {
         if (monitor.state != JobMonitor.State.Idle || monitor.lines.isNotEmpty()) {
             SectionCard {
                 JobStatusView(monitor)
-                LogView(monitor.lines, height = 320.dp)
+                ConsoleView(monitor.lines, isRunning = monitor.state.isBusy,
+                    height = 320.dp)
             }
         }
 

@@ -169,6 +169,8 @@ class Api(private val baseUrl: HttpUrl, cookieStore: SharedPreferences) {
 
     suspend fun queue(): QueueStatus = get("api/queue")
 
+    suspend fun cookieStatus(): CookieStatusResponse = get("api/cookies/status")
+
     // ---------------------------------------------------------------- nightly
 
     suspend fun startNightly(): JobRef = sendFor("nightly", "POST")

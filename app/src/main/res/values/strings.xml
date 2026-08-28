@@ -102,4 +102,20 @@
     <string name="nav_sync">Sync</string>
     <string name="nav_nightly">Nightly</string>
     <string name="nav_settings">Options</string>
+    <string name="console_title">Console</string>
+    <string name="console_running">running</string>
+    <string name="console_done">done</string>
+    <string name="console_error_one">1 error</string>
+    <string name="console_error_many">%1$d errors</string>
+    <string name="console_missing_one">1 not found</string>
+    <string name="console_missing_many">%1$d not found</string>
+    <string name="cookies_signedout_title">Cookies no longer work</string>
+    <string name="cookies_expired_title">Cookies expired</string>
+    <string name="cookies_missing_title">Cookie file not found</string>
+    <string name="cookies_soon_title">Cookies expire soon</string>
+    <string name="cookies_signedout_line">%1$s: no longer signed in</string>
+    <string name="cookies_expired_line">%1$s: expired</string>
+    <string name="cookies_missing_line">%1$s: file missing</string>
+    <string name="cookies_soon_line">%1$s: %2$d days left</string>
+    <string name="cookies_hint">Upload a fresh file in the web settings.</string>
 </resources>
