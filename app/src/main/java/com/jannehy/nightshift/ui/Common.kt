@@ -36,12 +36,24 @@ import com.jannehy.nightshift.core.QueueStatus
  */
 enum class LogKind { OK, WARNING, ERROR, PLAIN }
 
+/**
+ * `[2026-08-29 03:11:28]   Playlists failed:     0` - a closing statistic.
+ *
+ * The word "failed" makes such a line look like a failure while it is only a
+ * count, so it is recognised by its shape instead: a short label, a colon, a
+ * number, nothing else. The timestamp the server writes in front carries
+ * colons of its own and has to be skipped, or the shape never matches.
+ */
+private val COUNT_LINE =
+    Regex("""^[\s•-]*(\[[^\]]*\][\s•-]*)?[^:]{1,40}:\s*\d+\s*$""")
+
 fun logKindOf(line: String): LogKind {
     val lower = line.lowercase()
     return when {
         line.startsWith("=== DONE") || line.startsWith("✓") -> LogKind.OK
         lower.contains("no results found") || lower.contains("lookuperror") ||
             lower.contains("could not be downloaded") -> LogKind.WARNING
+        COUNT_LINE.matches(line) -> LogKind.PLAIN
         line.startsWith("=== FAILED") || line.contains("✗") || line.contains("⚠") ||
             lower.contains("error") || lower.contains("failed") -> LogKind.ERROR
         lower.contains("downloaded") -> LogKind.OK
