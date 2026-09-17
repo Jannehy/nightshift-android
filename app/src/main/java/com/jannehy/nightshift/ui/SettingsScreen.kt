@@ -32,6 +32,10 @@ fun SettingsScreen(session: Session) {
     var showUsers by remember { mutableStateOf(false) }
     var showConfig by remember { mutableStateOf(false) }
 
+    // The version shown here came from sign-in; ask again when the page opens
+    // so a server update does not stay invisible until the next launch.
+    LaunchedEffect(Unit) { session.refreshVersion() }
+
     Column(
         modifier = Modifier
             .fillMaxSize()

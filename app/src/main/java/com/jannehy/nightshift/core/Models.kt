@@ -190,6 +190,9 @@ data class NavidromeUsersResponse(
     val users: List<NavidromeUser> = emptyList(),
     val enabled: Boolean = false,
     val error: String? = null,
+    /** The Navidrome account belonging to whoever is signed in, when the
+     *  server can place them. Null keeps the picker on "public". */
+    @SerialName("default_owner") val defaultOwner: String? = null,
 )
 
 @Serializable

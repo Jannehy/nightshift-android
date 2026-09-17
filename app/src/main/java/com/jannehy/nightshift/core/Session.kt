@@ -86,6 +86,15 @@ class Session(context: Context) {
         }
     }
 
+    /** Re-reads the server's version.
+     *
+     *  Called when the settings page opens, not only while the session is
+     *  built: the page showed whatever the server answered at sign-in, so an
+     *  update on the server went unnoticed until the next launch. */
+    suspend fun refreshVersion() {
+        serverVersion = api?.version() ?: serverVersion
+    }
+
     private suspend fun refreshPhase() {
         val client = api ?: run { phase = Phase.NEEDS_SERVER; return }
         serverVersion = client.version()

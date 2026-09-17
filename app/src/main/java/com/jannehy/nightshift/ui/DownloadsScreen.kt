@@ -45,7 +45,13 @@ fun DownloadsScreen(session: Session, monitor: JobMonitor) {
     LaunchedEffect(session.navidromeEnabled) {
         if (session.navidromeEnabled && ndUsers.isEmpty()) {
             runCatching { session.api?.navidromeUsers() }.getOrNull()
-                ?.takeIf { it.enabled }?.let { ndUsers = it.users }
+                ?.takeIf { it.enabled }?.let {
+                    ndUsers = it.users
+                    // Start on the signed-in user's own account: picking
+                    // "public" hands the playlist to the server's first admin
+                    // instead of to the person downloading it.
+                    if (it.defaultOwner != null) ownerId = it.defaultOwner
+                }
         }
     }
 
