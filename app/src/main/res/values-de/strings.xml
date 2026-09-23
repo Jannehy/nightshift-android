@@ -60,6 +60,8 @@
     <string name="delete">Löschen</string>
     <string name="source">Quelle</string>
     <string name="visibility_help">Öffentliche Playlists sehen alle Nightshift-Benutzer; die Einstellung wird nach Navidrome gespiegelt.</string>
+    <string name="name">Name</string>
+    <string name="rename_help">Den Namen nimmt der Medienserver aus der Playlist-Datei, die der nächtliche Lauf neu schreibt — hier hält ein neuer Name also.</string>
     <string name="scheduled">Zeitplan</string>
     <string name="run_now">Jetzt starten</string>
     <string name="nightly_help">Synchronisiert alle markierten Playlists, taggt neue Dateien und schreibt die m3u8-Playlists neu. Große Playlists laufen in der nächsten Nacht weiter, wenn Rate-Limits sie abschneiden.</string>

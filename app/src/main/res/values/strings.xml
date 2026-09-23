@@ -60,6 +60,8 @@
     <string name="delete">Delete</string>
     <string name="source">Source</string>
     <string name="visibility_help">Public playlists are visible to every Nightshift user; the setting is mirrored to Navidrome.</string>
+    <string name="name">Name</string>
+    <string name="rename_help">The media server takes the name from the playlist file, which the nightly run writes again - so this is where a rename lasts.</string>
     <string name="scheduled">Scheduled</string>
     <string name="run_now">Run now</string>
     <string name="nightly_help">Re-syncs every synced playlist, tags new files and rewrites the m3u8 playlists. Large playlists continue the next night when rate limits cut them short.</string>

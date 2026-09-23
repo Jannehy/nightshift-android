@@ -192,10 +192,18 @@ class Api(private val baseUrl: HttpUrl, cookieStore: SharedPreferences) {
 
     suspend fun syncPlaylists(): SyncListResponse = get("api/sync-playlists")
 
-    suspend fun updateSyncMeta(url: String?, file: String?, owner: String?, isPublic: Boolean) {
-        send("api/sync-playlists", "PATCH", mapOf(
-            "url" to (url ?: ""), "file" to (file ?: ""),
-            "owner" to (owner ?: ""), "public" to isPublic))
+    /** Owner and visibility travel together and only an admin may send them;
+     *  the name belongs to whoever owns the playlist. Sending a field the
+     *  account may not change makes the server refuse the whole request. */
+    suspend fun updateSyncMeta(url: String?, file: String?, name: String,
+                               owner: String? = null, isPublic: Boolean? = null) {
+        val body = mutableMapOf<String, Any>(
+            "url" to (url ?: ""), "file" to (file ?: ""), "name" to name)
+        if (isPublic != null) {
+            body["owner"] = owner ?: ""
+            body["public"] = isPublic
+        }
+        send("api/sync-playlists", "PATCH", body)
     }
 
     suspend fun removeSyncItem(url: String?, file: String?) {

@@ -108,10 +108,11 @@ fun SyncScreen(session: Session) {
             session = session,
             item = item,
             onDismiss = { editing = null },
-            onSave = { owner, isPublic ->
+            onSave = { name, owner, isPublic ->
                 scope.launch {
                     runCatching {
-                        session.api?.updateSyncMeta(item.url, item.file, owner, isPublic)
+                        session.api?.updateSyncMeta(item.url, item.file, name,
+                                                    owner, isPublic)
                     }.onFailure { error = it.message }
                     editing = null
                     load()
@@ -151,7 +152,8 @@ private fun SyncRow(item: SyncItem, isAdmin: Boolean, onEdit: () -> Unit, onRemo
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            if (isAdmin) {
+            // Owners open the same dialog, with the name as the only field.
+            if (isAdmin || item.canRemove) {
                 IconButton(onClick = onEdit) { Icon(Icons.Default.Tune, null) }
             }
             if (item.canRemove) {
@@ -169,15 +171,18 @@ private fun SyncEditDialog(
     session: Session,
     item: SyncItem,
     onDismiss: () -> Unit,
-    onSave: (String?, Boolean) -> Unit,
+    onSave: (String, String?, Boolean?) -> Unit,
 ) {
+    var name by remember { mutableStateOf(item.name) }
     var isPublic by remember { mutableStateOf(item.isPublic) }
     var owner by remember { mutableStateOf(item.owner.orEmpty()) }
     var users by remember { mutableStateOf<List<NightshiftUser>>(emptyList()) }
     var expanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        users = runCatching { session.api?.users() }.getOrNull().orEmpty()
+        if (session.isAdmin) {
+            users = runCatching { session.api?.users() }.getOrNull().orEmpty()
+        }
     }
 
     AlertDialog(
@@ -185,34 +190,54 @@ private fun SyncEditDialog(
         title = { Text(item.name) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.visibility_public), Modifier.weight(1f))
-                    Switch(checked = isPublic, onCheckedChange = { isPublic = it })
-                }
-                Text(stringResource(R.string.visibility_help),
+                // The media server reads the name from the playlist file, which
+                // the nightly run writes again - so this is the only place a
+                // rename lasts. Owners may do it; the rest is the admin's.
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text(stringResource(R.string.name)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth())
+                Text(stringResource(R.string.rename_help),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
 
-                Box {
-                    OutlinedButton(onClick = { expanded = true }, Modifier.fillMaxWidth()) {
-                        Text("${stringResource(R.string.owner)}: " +
-                            owner.ifEmpty { stringResource(R.string.none) })
+                if (session.isAdmin) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(R.string.visibility_public), Modifier.weight(1f))
+                        Switch(checked = isPublic, onCheckedChange = { isPublic = it })
                     }
-                    DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.none)) },
-                            onClick = { owner = ""; expanded = false })
-                        users.forEach { user ->
+                    Text(stringResource(R.string.visibility_help),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+                    Box {
+                        OutlinedButton(onClick = { expanded = true }, Modifier.fillMaxWidth()) {
+                            Text("${stringResource(R.string.owner)}: " +
+                                owner.ifEmpty { stringResource(R.string.none) })
+                        }
+                        DropdownMenu(expanded, onDismissRequest = { expanded = false }) {
                             DropdownMenuItem(
-                                text = { Text(user.username) },
-                                onClick = { owner = user.username; expanded = false })
+                                text = { Text(stringResource(R.string.none)) },
+                                onClick = { owner = ""; expanded = false })
+                            users.forEach { user ->
+                                DropdownMenuItem(
+                                    text = { Text(user.username) },
+                                    onClick = { owner = user.username; expanded = false })
+                            }
                         }
                     }
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = { onSave(owner.ifEmpty { null }, isPublic) }) {
+            TextButton(
+                enabled = name.trim().isNotEmpty(),
+                onClick = {
+                    onSave(name.trim(), owner.ifEmpty { null },
+                           if (session.isAdmin) isPublic else null)
+                }) {
                 Text(stringResource(R.string.save))
             }
         },
