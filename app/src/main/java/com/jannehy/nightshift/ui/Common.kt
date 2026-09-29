@@ -47,6 +47,17 @@ enum class LogKind { OK, WARNING, ERROR, PLAIN }
 private val COUNT_LINE =
     Regex("""^[\s•-]*(\[[^\]]*\][\s•-]*)?[^:]{1,40}:\s*\d+\s*$""")
 
+/**
+ * Plain "error" also hides inside words that mean nothing here: a track by
+ * "Absolute Terror" turned a clean run red, and the server then repeated the
+ * invented entry in its closing summary, so one line was counted three times.
+ * The word boundary rules those out.
+ */
+private val PROBLEM_WORD = Regex("""\b(?:error|failed)""", RegexOption.IGNORE_CASE)
+
+/** What the boundary would otherwise lose: HTTPError, ConnectionError. */
+private val COMPOUND_ERROR = Regex("""[A-Za-z]Error\b""")
+
 fun logKindOf(line: String): LogKind {
     val lower = line.lowercase()
     return when {
@@ -55,7 +66,8 @@ fun logKindOf(line: String): LogKind {
             lower.contains("could not be downloaded") -> LogKind.WARNING
         COUNT_LINE.matches(line) -> LogKind.PLAIN
         line.startsWith("=== FAILED") || line.contains("✗") || line.contains("⚠") ||
-            lower.contains("error") || lower.contains("failed") -> LogKind.ERROR
+            PROBLEM_WORD.containsMatchIn(line) ||
+            COMPOUND_ERROR.containsMatchIn(line) -> LogKind.ERROR
         lower.contains("downloaded") -> LogKind.OK
         else -> LogKind.PLAIN
     }
