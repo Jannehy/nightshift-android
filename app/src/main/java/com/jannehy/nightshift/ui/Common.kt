@@ -58,6 +58,36 @@ private val PROBLEM_WORD = Regex("""\b(?:error|failed)""", RegexOption.IGNORE_CA
 /** What the boundary would otherwise lose: HTTPError, ConnectionError. */
 private val COMPOUND_ERROR = Regex("""[A-Za-z]Error\b""")
 
+/**
+ * A run closes with "Errors in this run (N):" and repeats every entry as a
+ * bullet underneath. Counting coloured lines therefore counts one failure
+ * three times - where it happened, in the heading, in the bullet. Where the
+ * server states a number, that number wins; the tally below is only a
+ * fallback for a run still in progress.
+ */
+fun statedTotal(lines: List<String>, marker: String): Int? {
+    for (line in lines.asReversed()) {
+        val at = line.indexOf(marker)
+        if (at < 0) continue
+        val open = line.indexOf('(', at)
+        val close = line.indexOf(')', open + 1)
+        if (open < 0 || close < 0) continue
+        line.substring(open + 1, close).toIntOrNull()?.let { return it }
+    }
+    return null
+}
+
+fun isSummaryLine(line: String): Boolean {
+    var body = line.trimStart()
+    if (body.startsWith("[")) {
+        val close = body.indexOf(']')
+        if (close >= 0) body = body.substring(close + 1).trimStart()
+    }
+    return body.startsWith("\u2022") ||
+        line.contains("Errors in this run") ||
+        line.contains("Not found (")
+}
+
 fun logKindOf(line: String): LogKind {
     val lower = line.lowercase()
     return when {
@@ -88,8 +118,10 @@ fun ConsoleView(
     height: Dp = 260.dp,
 ) {
     var open by remember { mutableStateOf(false) }
-    val errors = lines.count { logKindOf(it) == LogKind.ERROR }
-    val missing = lines.count { logKindOf(it) == LogKind.WARNING }
+    val errors = statedTotal(lines, "Errors in this run")
+        ?: lines.count { !isSummaryLine(it) && logKindOf(it) == LogKind.ERROR }
+    val missing = statedTotal(lines, "Not found")
+        ?: lines.count { !isSummaryLine(it) && logKindOf(it) == LogKind.WARNING }
 
     val summary = buildList {
         add(stringResource(if (isRunning) R.string.console_running else R.string.console_done))
